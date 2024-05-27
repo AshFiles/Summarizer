@@ -16,8 +16,8 @@ original_subtitles = ""
 last_enquiry_response = ""
 
 # Define colors
-bg_color = "#000000"  # black
-text_color = "#FFFFFF"  # white
+bg_color = "#000000"    # black
+text_color = "#74FF33"  # green
 
 def get_subtitles(video_id, lang):
     """
@@ -57,7 +57,7 @@ def summarize_text(text, language):
     """
     prompt = "Please summarize the following text into key points and include any key information:\n\n"
     if language == 'hi':
-        prompt = "कृपया निम्नलिखित पाठ को मुख्य बिंदुओं में सारांशित करें और कोई भी महत्वपूर्ण जानकारी शामिल करें:\n\n"
+        prompt = "कृपया निम्नलिखित प्रतिलिपि को मुख्य बिंदुओं में सारांशित करें और कोई भी महत्वपूर्ण जानकारी शामिल करें:\n\n"
     
     text = truncate_text(text)
 
@@ -95,7 +95,22 @@ def fetch_subtitles(language):
                 text_box.config(state=tk.DISABLED)
                 check_scrollbar(text_box, text_scrollbar)
         else:
-            messagebox.showerror("Error", f"No {language.capitalize()} subtitles found.")
+            # If no English subtitles are found, try other languages
+            if language == 'en':
+                other_langs = ['hi', 'es', 'fr', 'de', 'it', 'ja', 'ko', 'pt', 'ru', 'zh']
+                for lang in other_langs:
+                    subtitles = get_subtitles(video_id, lang)
+                    if subtitles:
+                        summary = summarize_text(subtitles, lang)
+                        if summary:
+                            original_subtitles = subtitles
+                            text_box.config(state=tk.NORMAL)
+                            text_box.delete(1.0, tk.END)
+                            text_box.insert(tk.END, f"{lang.capitalize()} Subtitles Summary:\n\n{summary}")
+                            text_box.config(state=tk.DISABLED)
+                            check_scrollbar(text_box, text_scrollbar)
+                            return
+            messagebox.showerror("Error", f"No subtitles found in any language.")
     else:
         messagebox.showerror("Error", "Clipboard does not contain a valid YouTube URL.")
 
@@ -232,6 +247,31 @@ def ask_without_subtitles(custom_prompt, reference_text):
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
+def show_original_subtitles():
+    """
+    Show the original subtitles in a new popup window.
+    """
+    if not original_subtitles:
+        messagebox.showerror("Error", "No subtitles available.")
+        return
+
+    subtitles_window = tk.Toplevel(root)
+    subtitles_window.title("Original Subtitles")
+    subtitles_window.configure(bg=bg_color)
+
+    subtitles_text_frame = tk.Frame(subtitles_window, bg=bg_color)
+    subtitles_text_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+    subtitles_scrollbar = Scrollbar(subtitles_text_frame)
+    subtitles_text = Text(subtitles_text_frame, wrap=tk.WORD, bg=bg_color, fg=text_color, font=("Arial", 12), yscrollcommand=subtitles_scrollbar.set)
+    subtitles_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    subtitles_scrollbar.pack_forget()
+    subtitles_scrollbar.config(command=subtitles_text.yview)
+
+    subtitles_text.insert(tk.END, original_subtitles)
+    subtitles_text.config(state=tk.DISABLED)
+    check_scrollbar(subtitles_text, subtitles_scrollbar)
+
 # Create the main window
 root = tk.Tk()
 root.title("Summarizer")
@@ -241,12 +281,9 @@ root.configure(bg=bg_color)
 button_frame = tk.Frame(root, bg=bg_color)
 button_frame.pack(pady=10)
 
-# Create buttons for fetching subtitles in English and Hindi
-english_button = tk.Button(button_frame, text="English", command=lambda: fetch_subtitles('en'), bg=bg_color, fg=text_color, font=("Arial", 12))
+# Create buttons for fetching subtitles in English
+english_button = tk.Button(button_frame, text="Get Subtitles", command=lambda: fetch_subtitles('en'), bg=bg_color, fg=text_color, font=("Arial", 12))
 english_button.pack(side=tk.LEFT, padx=5)
-
-hindi_button = tk.Button(button_frame, text="Hindi", command=lambda: fetch_subtitles('hi'), bg=bg_color, fg=text_color, font=("Arial", 12))
-hindi_button.pack(side=tk.LEFT, padx=5)
 
 # Create and place the text box with a scrollbar
 text_frame = tk.Frame(root, bg=bg_color)
@@ -263,6 +300,10 @@ text_box.bind("<KeyRelease>", lambda e: check_scrollbar(text_box, text_scrollbar
 # Place the enquiry button below the text box
 enquiry_button = tk.Button(root, text="Enquiry", command=open_enquiry_window, bg=bg_color, fg=text_color, font=("Arial", 12))
 enquiry_button.pack(pady=10)
+
+# Place the show subtitles button below the enquiry button
+show_subtitles_button = tk.Button(root, text="Show Subtitles", command=show_original_subtitles, bg=bg_color, fg=text_color, font=("Arial", 12))
+show_subtitles_button.pack(pady=10)
 
 # Setup keyboard shortcut
 setup_keyboard_shortcut()

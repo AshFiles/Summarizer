@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import messagebox, Scrollbar, Text
+import customtkinter as ctk
+from tkinter import messagebox
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 import pyperclip
@@ -16,8 +16,8 @@ original_subtitles = ""
 last_enquiry_response = ""
 
 # Define colors
-bg_color = "#000000"    # black
-text_color = "#74FF33"  # green
+bg_color = "#1a1a1a"  # Dark background
+text_color = "#e0e0e0"  # Light text color
 
 def get_subtitles(video_id, lang):
     """
@@ -89,11 +89,10 @@ def fetch_subtitles(language):
             summary = summarize_text(subtitles, language)
             if summary:
                 original_subtitles = subtitles
-                text_box.config(state=tk.NORMAL)
-                text_box.delete(1.0, tk.END)
-                text_box.insert(tk.END, f"{language.capitalize()} Subtitles Summary:\n\n{summary}")
-                text_box.config(state=tk.DISABLED)
-                check_scrollbar(text_box, text_scrollbar)
+                text_box.configure(state=ctk.NORMAL)
+                text_box.delete(1.0, ctk.END)
+                text_box.insert(ctk.END, f"{language.capitalize()} Subtitles Summary:\n\n{summary}")
+                text_box.configure(state=ctk.DISABLED)
         else:
             # If no English subtitles are found, try other languages
             if language == 'en':
@@ -104,25 +103,14 @@ def fetch_subtitles(language):
                         summary = summarize_text(subtitles, lang)
                         if summary:
                             original_subtitles = subtitles
-                            text_box.config(state=tk.NORMAL)
-                            text_box.delete(1.0, tk.END)
-                            text_box.insert(tk.END, f"{lang.capitalize()} Subtitles Summary:\n\n{summary}")
-                            text_box.config(state=tk.DISABLED)
-                            check_scrollbar(text_box, text_scrollbar)
+                            text_box.configure(state=ctk.NORMAL)
+                            text_box.delete(1.0, ctk.END)
+                            text_box.insert(ctk.END, f"{lang.capitalize()} Subtitles Summary:\n\n{summary}")
+                            text_box.configure(state=ctk.DISABLED)
                             return
             messagebox.showerror("Error", f"No subtitles found in any language.")
     else:
         messagebox.showerror("Error", "Clipboard does not contain a valid YouTube URL.")
-
-def check_scrollbar(text_widget, scrollbar):
-    """
-    Show or hide the scrollbar based on the text content size.
-    """
-    text_widget.update_idletasks()
-    if text_widget.yview()[1] < 1.0:
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    else:
-        scrollbar.pack_forget()
 
 def bring_to_front():
     """
@@ -143,7 +131,7 @@ def open_enquiry_window(reference_text=""):
     Open a window to allow the user to make an enquiry based on the subtitles.
     """
     def submit_enquiry():
-        custom_prompt = enquiry_text.get("1.0", tk.END).strip()
+        custom_prompt = enquiry_text.get("1.0", ctk.END).strip()
         if custom_prompt:
             if original_subtitles:
                 enquiry_response = perform_enquiry(original_subtitles, custom_prompt, reference_text)
@@ -152,22 +140,17 @@ def open_enquiry_window(reference_text=""):
             show_enquiry_response(enquiry_response)
         enquiry_window.destroy()
     
-    enquiry_window = tk.Toplevel(root)
+    enquiry_window = ctk.CTkToplevel(root)
     enquiry_window.title("Enquiry")
     enquiry_window.configure(bg=bg_color)
 
-    enquiry_text_frame = tk.Frame(enquiry_window, bg=bg_color)
-    enquiry_text_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    enquiry_text_frame = ctk.CTkFrame(enquiry_window)
+    enquiry_text_frame.pack(padx=10, pady=10, fill=ctk.BOTH, expand=True)
 
-    enquiry_scrollbar = Scrollbar(enquiry_text_frame)
-    enquiry_text = Text(enquiry_text_frame, wrap=tk.WORD, bg=bg_color, fg=text_color, font=("Arial", 12), yscrollcommand=enquiry_scrollbar.set)
-    enquiry_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    enquiry_scrollbar.pack_forget()
-    enquiry_scrollbar.config(command=enquiry_text.yview)
+    enquiry_text = ctk.CTkTextbox(enquiry_text_frame, wrap=ctk.WORD, font=("Arial", 12))
+    enquiry_text.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-    enquiry_text.bind("<KeyRelease>", lambda e: check_scrollbar(enquiry_text, enquiry_scrollbar))
-
-    submit_button = tk.Button(enquiry_window, text="Submit", command=submit_enquiry, bg=bg_color, fg=text_color, font=("Arial", 12))
+    submit_button = ctk.CTkButton(enquiry_window, text="Submit", command=submit_enquiry, font=("Arial", 12))
     submit_button.pack(pady=10)
 
 def show_enquiry_response(response):
@@ -177,31 +160,27 @@ def show_enquiry_response(response):
     global last_enquiry_response
     last_enquiry_response = response
     
-    response_window = tk.Toplevel(root)
+    response_window = ctk.CTkToplevel(root)
     response_window.title("Enquiry Response")
     response_window.configure(bg=bg_color)
 
-    response_text_frame = tk.Frame(response_window, bg=bg_color)
-    response_text_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    response_text_frame = ctk.CTkFrame(response_window)
+    response_text_frame.pack(padx=10, pady=10, fill=ctk.BOTH, expand=True)
 
-    response_scrollbar = Scrollbar(response_text_frame)
-    response_text = Text(response_text_frame, wrap=tk.WORD, bg=bg_color, fg=text_color, font=("Arial", 12), yscrollcommand=response_scrollbar.set)
-    response_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    response_scrollbar.pack_forget()
-    response_scrollbar.config(command=response_text.yview)
+    response_text = ctk.CTkTextbox(response_text_frame, wrap=ctk.WORD, font=("Arial", 12))
+    response_text.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-    response_text.insert(tk.END, response)
-    response_text.config(state=tk.DISABLED)
-    check_scrollbar(response_text, response_scrollbar)
+    response_text.insert(ctk.END, response)
+    response_text.configure(state=ctk.DISABLED)
 
-    button_frame = tk.Frame(response_window, bg=bg_color)
+    button_frame = ctk.CTkFrame(response_window)
     button_frame.pack(pady=10)
 
-    ok_button = tk.Button(button_frame, text="OK", command=response_window.destroy, bg=bg_color, fg=text_color, font=("Arial", 12))
-    ok_button.pack(side=tk.LEFT, padx=5)
+    ok_button = ctk.CTkButton(button_frame, text="OK", command=response_window.destroy, font=("Arial", 12))
+    ok_button.pack(side=ctk.LEFT, padx=5)
 
-    enquiry_button = tk.Button(button_frame, text="Enquiry", command=lambda: open_enquiry_window(response), bg=bg_color, fg=text_color, font=("Arial", 12))
-    enquiry_button.pack(side=tk.LEFT, padx=5)
+    enquiry_button = ctk.CTkButton(button_frame, text="Enquiry", command=lambda: open_enquiry_window(response), font=("Arial", 12))
+    enquiry_button.pack(side=ctk.LEFT, padx=5)
 
 def perform_enquiry(subtitles, custom_prompt, reference_text):
     """
@@ -255,55 +234,59 @@ def show_original_subtitles():
         messagebox.showerror("Error", "No subtitles available.")
         return
 
-    subtitles_window = tk.Toplevel(root)
+    def copy_subtitles():
+        pyperclip.copy(original_subtitles)
+        messagebox.showinfo("Copied", "Subtitles copied to clipboard.")
+
+    subtitles_window = ctk.CTkToplevel(root)
     subtitles_window.title("Original Subtitles")
     subtitles_window.configure(bg=bg_color)
 
-    subtitles_text_frame = tk.Frame(subtitles_window, bg=bg_color)
-    subtitles_text_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+    subtitles_text_frame = ctk.CTkFrame(subtitles_window)
+    subtitles_text_frame.pack(padx=10, pady=10, fill=ctk.BOTH, expand=True)
 
-    subtitles_scrollbar = Scrollbar(subtitles_text_frame)
-    subtitles_text = Text(subtitles_text_frame, wrap=tk.WORD, bg=bg_color, fg=text_color, font=("Arial", 12), yscrollcommand=subtitles_scrollbar.set)
-    subtitles_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    subtitles_scrollbar.pack_forget()
-    subtitles_scrollbar.config(command=subtitles_text.yview)
+    subtitles_text = ctk.CTkTextbox(subtitles_text_frame, wrap=ctk.WORD, font=("Arial", 12))
+    subtitles_text.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-    subtitles_text.insert(tk.END, original_subtitles)
-    subtitles_text.config(state=tk.DISABLED)
-    check_scrollbar(subtitles_text, subtitles_scrollbar)
+    subtitles_text.insert(ctk.END, original_subtitles)
+    subtitles_text.configure(state=ctk.DISABLED)
 
-# Create the main window
-root = tk.Tk()
+    copy_button = ctk.CTkButton(subtitles_window, text="Copy", command=copy_subtitles, font=("Arial", 12))
+    copy_button.pack(pady=10)
+
+# Initialize the main window
+ctk.set_appearance_mode("dark")  # Modes: "System" (default), "Dark", "Light"
+ctk.set_default_color_theme("dark-blue")  # Themes: "blue" (default), "green", "dark-blue"
+
+root = ctk.CTk()
 root.title("Summarizer")
+root.geometry("500x500")
 root.configure(bg=bg_color)
 
 # Create and place the buttons in a frame
-button_frame = tk.Frame(root, bg=bg_color)
+button_frame = ctk.CTkFrame(root)
 button_frame.pack(pady=10)
 
 # Create buttons for fetching subtitles in English
-english_button = tk.Button(button_frame, text="Get Subtitles", command=lambda: fetch_subtitles('en'), bg=bg_color, fg=text_color, font=("Arial", 12))
-english_button.pack(side=tk.LEFT, padx=5)
+english_button = ctk.CTkButton(button_frame, text="Get Subtitles", command=lambda: fetch_subtitles('en'), font=("Arial", 12))
+english_button.pack(side=ctk.LEFT, padx=5)
 
-# Create and place the text box with a scrollbar
-text_frame = tk.Frame(root, bg=bg_color)
-text_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+# Create and place the text box
+text_frame = ctk.CTkFrame(root)
+text_frame.pack(padx=10, pady=10, fill=ctk.BOTH, expand=True)
 
-text_scrollbar = Scrollbar(text_frame)
-text_box = Text(text_frame, wrap=tk.WORD, state=tk.DISABLED, bg=bg_color, fg=text_color, font=("Arial", 12), yscrollcommand=text_scrollbar.set)
-text_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-text_scrollbar.pack_forget()
-text_scrollbar.config(command=text_box.yview)
+text_box = ctk.CTkTextbox(text_frame, wrap=ctk.WORD, state=ctk.DISABLED, font=("Arial", 12))
+text_box.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-text_box.bind("<KeyRelease>", lambda e: check_scrollbar(text_box, text_scrollbar))
+# Place the enquiry button and show subtitles button in the same row
+button_row_frame = ctk.CTkFrame(root)
+button_row_frame.pack(pady=10)
 
-# Place the enquiry button below the text box
-enquiry_button = tk.Button(root, text="Enquiry", command=open_enquiry_window, bg=bg_color, fg=text_color, font=("Arial", 12))
-enquiry_button.pack(pady=10)
+enquiry_button = ctk.CTkButton(button_row_frame, text="Enquiry", command=open_enquiry_window, font=("Arial", 12))
+enquiry_button.pack(side=ctk.LEFT, padx=5)
 
-# Place the show subtitles button below the enquiry button
-show_subtitles_button = tk.Button(root, text="Show Subtitles", command=show_original_subtitles, bg=bg_color, fg=text_color, font=("Arial", 12))
-show_subtitles_button.pack(pady=10)
+show_subtitles_button = ctk.CTkButton(button_row_frame, text="Show Subtitles", command=show_original_subtitles, font=("Arial", 12))
+show_subtitles_button.pack(side=ctk.LEFT, padx=5)
 
 # Setup keyboard shortcut
 setup_keyboard_shortcut()
